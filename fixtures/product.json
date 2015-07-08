@@ -1,0 +1,11 @@
+{
+    "id": 1,
+    "name": "A green door",
+    "price": 12.50,
+    "active": true,
+    "tags": ["home", "green"],
+    "category": {
+        "id": 2,
+        "name": "Home"
+    }
+}
