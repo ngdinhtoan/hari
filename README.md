@@ -6,20 +6,20 @@ Generate GO struct from JSON
 
 ### Why Hari?
 
-When you write a client for RESTful service in GO, usually you have to define some structures to parse JSON response.
-It's bored and take time. Hari will help you on that job.
+When you make a client for RESTful service in GO, usually you have to define some structures to parse JSON response.
+It's boring and takes time. Hari will help you on that job.
 
-But, please be aware that generated struct may do not meet your requirement. You have to review it before using.
+But, please be aware that generated struct may not meet your requirement. You have to review it before using.
 
 ### How to use
 
-Install Hari by running command
+Install Hari by running the following command
 
     go get github.com/ngdinhtoan/hari
 
-Put JSON string into an file which must have `.json` extension, file name will be used to name struct.
+Put JSON string into a file within `.json` extension, the file name will be used to name struct.
 
-Example file `product.json` have content
+Example file `product.json` has content
 
 ```json
 {
@@ -39,7 +39,7 @@ Run Hari command
 
     hari --input-dir=[path/to/dir]
 
-then it will generate `product.go` file in same directory, and its content is
+then it will generate `product.go` file in the same directory, and its content is
 
 ```go
 package main
