@@ -95,6 +95,8 @@ func parseFile(file string) error {
 
 	for {
 		select {
+		case err := <-errs:
+			log.Fatalf("Error: %v", err)
 		case <-done:
 			close(rs)
 			close(errs)

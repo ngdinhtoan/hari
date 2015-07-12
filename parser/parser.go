@@ -2,7 +2,7 @@ package parser
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"regexp"
 	"sync"
 )
@@ -58,7 +58,7 @@ func Parse(structName string, jsonData []byte, rs chan *Struct, errs chan error,
 
 	smap, err := parseJSONToMap(jsonData)
 	if err != nil {
-		errs <- errors.New("sorry, can not convert this json into a structure")
+		errs <- fmt.Errorf("error when generating struct %s: %v", structName, err)
 		if markStructDone(structName) == true {
 			done <- true
 		}
