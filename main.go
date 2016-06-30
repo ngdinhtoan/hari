@@ -19,9 +19,9 @@ import (
 type appConfig struct {
 	InputDir   string `flag:"input-dir" usage:"Path to directory which contains json file. Default is working directory."`
 	OutputDir  string `flag:"output-dir" usage:"Path to directory to which generated go files will be exported. Same as input directory if omit."`
-	ShowHelp   bool   `flag:"help" usage:"Print this message."`
 	OnTheFly   bool   `flag:"on-the-fly" usage:"Read JSON string from stdin pipe, this action require --struct-name."`
 	StructName string `flag:"struct-name" usage:"Name of root struct, this is required for --on-the-fly."`
+	ShowHelp   bool   `flag:"help" usage:"Print this message."`
 }
 
 var conf appConfig

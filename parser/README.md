@@ -1,0 +1,1 @@
+[![GoDoc](https://godoc.org/github.com/ngdinhtoan/hari/parser?status.svg)](https://godoc.org/github.com/ngdinhtoan/hari/parser)
