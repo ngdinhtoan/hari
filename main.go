@@ -2,61 +2,93 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/ngdinhtoan/flagstruct"
 	"github.com/ngdinhtoan/hari/parser"
 )
 
-var (
-	inputDir  string
-	outputDir string
-	showHelp  bool
-)
+type appConfig struct {
+	InputDir   string `flag:"input-dir" usage:"Path to directory which contains json file. Default is working directory."`
+	OutputDir  string `flag:"output-dir" usage:"Path to directory to which generated go files will be exported. Same as input directory if omit."`
+	ShowHelp   bool   `flag:"help" usage:"Print this message."`
+	OnTheFly   bool   `flag:"on-the-fly" usage:"Read JSON string from stdin pipe, this action require --struct-name."`
+	StructName string `flag:"struct-name" usage:"Name of root struct, this is required for --on-the-fly."`
+}
+
+var conf appConfig
+var newline = []byte("\n\n")
 
 func init() {
+	conf = appConfig{}
+	flagstruct.Parse(&conf)
+
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	flag.StringVar(&inputDir, "input-dir", pwd, "Path to directory which contains json file. Default is working directory.")
-	flag.StringVar(&outputDir, "output-dir", "", "Path to directory to which generated go files will be exported. Same as input directory if omit.")
-	flag.BoolVar(&showHelp, "help", false, "Print this message")
-
-	flag.Parse()
-
-	if !strings.HasSuffix(inputDir, "/") {
-		inputDir += "/"
+	if conf.InputDir == "" {
+		conf.InputDir = pwd
 	}
 
-	if outputDir == "" {
-		outputDir = inputDir
-	} else if !strings.HasSuffix(outputDir, "/") {
-		outputDir += "/"
+	if !strings.HasSuffix(conf.InputDir, "/") {
+		conf.InputDir += "/"
+	}
+
+	if conf.OutputDir == "" {
+		conf.OutputDir = conf.InputDir
+	} else if !strings.HasSuffix(conf.OutputDir, "/") {
+		conf.OutputDir += "/"
+	}
+
+	if conf.OnTheFly && conf.StructName == "" {
+		fmt.Println("You are using on-the-fly option, struct name is required.")
+		conf.ShowHelp = true
 	}
 }
 
 func main() {
-	if showHelp {
+	if conf.ShowHelp {
 		flag.Usage()
 		os.Exit(0)
 	}
 
-	files, _ := filepath.Glob(inputDir + "/*.json")
+	if conf.OnTheFly {
+		reader := bufio.NewReader(os.Stdin)
+		contentBuf := bytes.Buffer{}
+		reader.WriteTo(&contentBuf)
 
-	if len(files) == 0 {
-		fmt.Printf("No json files in %q folder.\n", inputDir)
-		os.Exit(1)
-	}
+		f, err := os.Create(conf.OutputDir + conf.StructName + ".go")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
 
-	for _, file := range files {
-		parseFile(file)
+		w := bufio.NewWriter(f)
+		if err := parseJSONString(contentBuf.Bytes(), conf.StructName, w); err != nil {
+			log.Fatal(err)
+		}
+		w.Flush()
+	} else {
+		files, _ := filepath.Glob(conf.InputDir + "/*.json")
+
+		if len(files) == 0 {
+			fmt.Printf("No json files in %q folder.\n", conf.InputDir)
+			os.Exit(1)
+		}
+
+		for _, file := range files {
+			parseFile(file)
+		}
 	}
 
 	log.Println("Finish!")
@@ -73,39 +105,44 @@ func parseFile(file string) error {
 		return err
 	}
 
-	filename := strings.TrimPrefix(strings.TrimSuffix(file, ".json"), inputDir)
+	filename := strings.TrimPrefix(strings.TrimSuffix(file, ".json"), conf.InputDir)
 
-	rs := make(chan *parser.Struct)
-	errs := make(chan error)
-	done := make(chan bool)
-
-	f, err := os.Create(outputDir + filename + ".go")
+	f, err := os.Create(conf.OutputDir + filename + ".go")
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	newline := []byte("\n\n")
 	w := bufio.NewWriter(f)
+	if err := parseJSONString(content, filename, w); err != nil {
+		return err
+	}
 
-	w.WriteString("package main")
-	w.Flush()
+	return w.Flush()
+}
 
-	go parser.Parse(parser.ToCamelCase(filename), content, rs, errs, done)
+func parseJSONString(content []byte, structName string, w io.Writer) error {
+	w.Write([]byte("package main"))
+
+	rs := make(chan *parser.Struct)
+	errs := make(chan error)
+	done := make(chan bool)
+
+	defer close(rs)
+	defer close(errs)
+	defer close(done)
+
+	go parser.Parse(parser.ToCamelCase(structName), content, rs, errs, done)
 
 	for {
 		select {
 		case err := <-errs:
-			log.Fatalf("Error: %v", err)
+			return err
 		case <-done:
-			close(rs)
-			close(errs)
-			close(done)
 			return nil
 		case s := <-rs:
 			w.Write(newline)
 			s.WriteTo(w)
-			w.Flush()
 		}
 	}
 }

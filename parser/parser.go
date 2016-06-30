@@ -15,24 +15,28 @@ var (
 	alphaNumRegex   = regexp.MustCompile("[0-9A-Za-z]+")
 	startByNumRegex = regexp.MustCompile("^[0-9]")
 
-	structMutex = &sync.Mutex{}
+	structMutex = &sync.RWMutex{}
 	structData  = map[string]json.RawMessage{}
 	structDone  = map[string]bool{}
 )
 
 func registerStruct(name string, data json.RawMessage) bool {
-	structMutex.Lock()
-	defer structMutex.Unlock()
-
+	structMutex.RLock()
 	if _, found := structDone[name]; found {
+		structMutex.RUnlock()
 		return false
 	}
 
 	if _, found := structData[name]; found {
+		structMutex.RUnlock()
 		return false
 	}
+	structMutex.RUnlock()
 
+	structMutex.Lock()
 	structData[name] = data
+	structMutex.Unlock()
+
 	return true
 }
 

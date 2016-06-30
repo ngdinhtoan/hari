@@ -1,8 +1,6 @@
 # Hari [![Build Status](https://travis-ci.org/ngdinhtoan/hari.svg)](https://travis-ci.org/ngdinhtoan/hari)
 
-Generate GO struct from JSON
-
-    go get github.com/ngdinhtoan/hari
+*Generate GO struct from JSON string*
 
 ### Why Hari?
 
