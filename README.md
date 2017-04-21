@@ -3,6 +3,7 @@
 *Generate GO struct from JSON string*
 
 [![Build Status](https://travis-ci.org/ngdinhtoan/hari.svg)](https://travis-ci.org/ngdinhtoan/hari)
+[![Coverage Status](https://coveralls.io/repos/github/ngdinhtoan/hari/badge.svg?branch=master)](https://coveralls.io/github/ngdinhtoan/hari?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ngdinhtoan/hari)](https://goreportcard.com/report/github.com/ngdinhtoan/hari)
 
 ### Why Hari?
